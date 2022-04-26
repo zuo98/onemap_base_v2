@@ -73,6 +73,19 @@ class OneMap extends Map {
         }
     }
 
+    setBaseLayerVisible(layerId) {
+        if (this.baseLayers) {
+            console.log(' this.busLayersInfo: ',  this.baseLayersInfo);
+            this.baseLayersInfo.forEach((item) => {
+                item.layer.setVisible(false);
+                if (layerId===item.id) {
+                    item.layer.setVisible(true);
+                }
+            });
+            this.selectBaseLayerId = layerId;
+        }
+    }
+
     getBusLayers() {
         return this.busLayers;
     }
