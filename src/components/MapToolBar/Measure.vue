@@ -13,6 +13,7 @@
             </el-select>
             <el-checkbox v-model="showSegments">局部测量</el-checkbox>
             <el-checkbox v-model="clearPrevious">连续测量</el-checkbox>
+            <el-button size="mini" @click="clearMeasure">清除</el-button>
         </div>
     </div>
 </template>
@@ -26,14 +27,16 @@ import { Vector as VectorSource } from "ol/source";
 import { Vector as VectorLayer } from "ol/layer";
 
 import {
-    style,
-    labelStyle,
+    lineStyle,
     tipStyle,
     modifyStyle,
-    segmentStyle,
     formatLength,
     formatArea,
+    createLabelStyle,
+    createSegmentStyle,
+    createVertexStyle,
 } from "./MapToolBarConfig";
+
 export default {
     //import引入的组件需要注入到对象中才能使用
     components: {},
@@ -72,17 +75,35 @@ export default {
     computed: {},
     //监控data中的数据变化
     watch: {
-        measureType: function ()  {
+        measureType: function () {
             this.oneMap.removeInteraction(this.draw);
             this.addInteraction();
         },
-        showSegments: function (){
+        showSegments: function () {
             this.vector.changed();
             this.draw.getOverlay().changed();
         },
     },
     //方法集合
     methods: {
+        init() {
+            this.source = new VectorSource();
+            this.modify = new Modify({
+                source: this.source,
+                style: modifyStyle,
+            });
+            this.vector = new VectorLayer({
+                source: this.source,
+                style: (feature) => {
+                    return this.styleFunction(feature, this.showSegments);
+                },
+                zIndex: 10000,
+            });
+            this.oneMap.addLayer(this.vector);
+            this.oneMap.addInteraction(this.modify);
+            this.addInteraction();
+        },
+
         addInteraction() {
             const drawType = this.measureType;
             const activeTip =
@@ -115,49 +136,52 @@ export default {
                 this.oneMap.once("pointermove", function () {
                     modifyStyle.setGeometry();
                 });
+                
                 tip = idleTip;
             });
             this.modify.setActive(true);
             this.oneMap.addInteraction(this.draw);
         },
+
         styleFunction(feature, segments, drawType, tip) {
-            const segmentStyles = [segmentStyle];
-            const styles = [style];
+            const styles = [lineStyle];
             const geometry = feature.getGeometry();
             const type = geometry.getType();
-            let point, label, line;
+            let point, label, line, startPoint;
             if (!drawType || drawType === type) {
                 if (type === "Polygon") {
+                    //端点和拐点
+                    geometry.getCoordinates().forEach((line) => {
+                        line.forEach((coord) => {
+                            styles.push(createVertexStyle(new Point(coord)));
+                        });
+                    });
                     point = geometry.getInteriorPoint();
                     label = formatArea(geometry);
                     line = new LineString(geometry.getCoordinates()[0]);
                 } else if (type === "LineString") {
+                    //端点和拐点
+                    geometry.getCoordinates().forEach((coord) => {
+                        styles.push(createVertexStyle(new Point(coord)));
+                    });
                     point = new Point(geometry.getLastCoordinate());
+                    startPoint = new Point(geometry.getFirstCoordinate());
                     label = formatLength(geometry);
                     line = geometry;
                 }
             }
             if (segments && line) {
-                let count = 0;
                 line.forEachSegment(function (a, b) {
                     const segment = new LineString([a, b]);
                     const label = formatLength(segment);
-                    if (segmentStyles.length - 1 < count) {
-                        segmentStyles.push(segmentStyle.clone());
-                    }
                     const segmentPoint = new Point(
                         segment.getCoordinateAt(0.5)
                     );
-                    segmentStyles[count].setGeometry(segmentPoint);
-                    segmentStyles[count].getText().setText(label);
-                    styles.push(segmentStyles[count]);
-                    count++;
+                    styles.push(createSegmentStyle(segmentPoint,label));
                 });
             }
-            if (label) {
-                labelStyle.setGeometry(point);
-                labelStyle.getText().setText(label);
-                styles.push(labelStyle);
+            if (point && label) {
+                styles.push(createLabelStyle(point,label));
             }
             if (
                 tip &&
@@ -168,25 +192,22 @@ export default {
                 tipStyle.getText().setText(tip);
                 styles.push(tipStyle);
             }
+            if(startPoint){
+                styles.push(createLabelStyle(startPoint,"Start Point"));
+            }
             return styles;
         },
+
+        clearMeasure(){
+            this.source.clear();
+        },
+
     },
     //生命周期 - 创建完成（可以访问当前this实例）
     created() {},
     //生命周期 - 挂载完成（可以访问DOM元素）
     mounted() {
-        this.source = new VectorSource();
-        this.modify = new Modify({ source: this.source, style: modifyStyle });
-        this.vector = new VectorLayer({
-            source: this.source,
-            style: (feature) => {
-                return this.styleFunction(feature, this.showSegments);
-            },
-            zIndex: 10000,
-        });
-        this.oneMap.addLayer(this.vector);
-        this.oneMap.addInteraction(this.modify);
-        this.addInteraction();
+        this.init();
     },
     //生命周期 - 创建之前
     beforeCreate() {},
@@ -198,9 +219,9 @@ export default {
     updated() {},
     //生命周期 - 销毁之前
     beforeDestroy() {
-        this.oneMap.removeLayer(this.vector);
-        this.oneMap.removeInteraction(this.draw);
         this.oneMap.removeInteraction(this.modify);
+        this.oneMap.removeInteraction(this.draw);
+        this.oneMap.removeLayer(this.vector);
     },
     //生命周期 - 销毁完成
     destroyed() {},
@@ -213,6 +234,7 @@ export default {
 .panel {
     width: 150px;
     height: 150px;
+    border-radius: 5px;
     background-color: white;
     padding: 0 20px;
     display: flex;
