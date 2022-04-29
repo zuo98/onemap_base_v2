@@ -2,6 +2,7 @@
     <div id="map">
         <div class="MapToolBar">
             <map-tool-bar :oneMap="oneMap"></map-tool-bar>
+            <el-button type="primary" @click="clear">清除</el-button>
             <el-button type="primary" @click="change">{{ statu }}</el-button>
             <el-button type="primary" @click="changeBaselayer"
                 >swicth</el-button
@@ -15,9 +16,9 @@ import OneMap from "./OneMap";
 import View from "ol/View";
 import { OSM, Stamen, TileArcGISRest } from "ol/source";
 import { Tile as TileLayer } from "ol/layer";
-import { fromLonLat } from "ol/proj";
 
 import MapToolBar from "./MapToolBar/index.vue";
+import {fullExtentConfig} from "./MapToolBar/MapToolBarConfig"
 export default {
     name: "HelloWorld",
     props: {
@@ -77,9 +78,21 @@ export default {
         this.oneMap = new OneMap({
             target: "map",
             view: new View({
-                center: fromLonLat([114.31, 30.52]),
-                zoom: 11,
+                center: fullExtentConfig.center,
+                zoom: fullExtentConfig.zoom,
+                projection: fullExtentConfig.projection,
             }),
+        });
+
+        this.oneMap.on("click", (e) => {
+            let center = this.oneMap.getView().getCenter();
+            let zoom = this.oneMap.getView().getZoom();
+            let resolution = this.oneMap.getView().getResolution();
+
+            console.log("click point: ", e.coordinate);
+            console.log("map center: ", center);
+            console.log("map zoom: ", zoom);
+            console.log("map resolution: ", resolution);
         });
 
         this.oneMap.setBaseLayersInfo([

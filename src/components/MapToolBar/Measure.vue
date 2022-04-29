@@ -23,15 +23,12 @@
 //例如：import 《组件名称》 from '《组件路径》';
 import { Draw, Modify } from "ol/interaction";
 import { LineString, Point } from "ol/geom";
-import { Vector as VectorSource } from "ol/source";
-import { Vector as VectorLayer } from "ol/layer";
+import { getArea, getLength } from "ol/sphere";
 
 import {
     lineStyle,
     tipStyle,
     modifyStyle,
-    formatLength,
-    formatArea,
     createLabelStyle,
     createSegmentStyle,
     createVertexStyle,
@@ -62,17 +59,22 @@ export default {
             ],
             measureType: "LineString",
             showSegments: true,
-            clearPrevious: false,
+            clearPrevious: true,
 
             tipPoint: "",
-            source: null,
-            vector: null,
             modify: null,
             draw: null,
         };
     },
     //计算属性 类似于data概念
-    computed: {},
+    computed: {
+        vectorLayer: function () {
+            return this.oneMap.getMeasureLayer();
+        },
+        source: function () {
+            return this.oneMap.getMeasureLayer().getSource();
+        },
+    },
     //监控data中的数据变化
     watch: {
         measureType: function () {
@@ -80,26 +82,20 @@ export default {
             this.addInteraction();
         },
         showSegments: function () {
-            this.vector.changed();
+            this.vectorLayer.changed();
             this.draw.getOverlay().changed();
         },
     },
     //方法集合
     methods: {
         init() {
-            this.source = new VectorSource();
             this.modify = new Modify({
                 source: this.source,
                 style: modifyStyle,
             });
-            this.vector = new VectorLayer({
-                source: this.source,
-                style: (feature) => {
-                    return this.styleFunction(feature, this.showSegments);
-                },
-                zIndex: 10000,
+            this.vectorLayer.setStyle((feature) => {
+                return this.styleFunction(feature, this.showSegments);
             });
-            this.oneMap.addLayer(this.vector);
             this.oneMap.addInteraction(this.modify);
             this.addInteraction();
         },
@@ -136,7 +132,7 @@ export default {
                 this.oneMap.once("pointermove", function () {
                     modifyStyle.setGeometry();
                 });
-                
+
                 tip = idleTip;
             });
             this.modify.setActive(true);
@@ -157,7 +153,7 @@ export default {
                         });
                     });
                     point = geometry.getInteriorPoint();
-                    label = formatArea(geometry);
+                    label = this.formatArea(geometry);
                     line = new LineString(geometry.getCoordinates()[0]);
                 } else if (type === "LineString") {
                     //端点和拐点
@@ -166,22 +162,22 @@ export default {
                     });
                     point = new Point(geometry.getLastCoordinate());
                     startPoint = new Point(geometry.getFirstCoordinate());
-                    label = formatLength(geometry);
+                    label = this.formatLength(geometry);
                     line = geometry;
                 }
             }
             if (segments && line) {
-                line.forEachSegment(function (a, b) {
+                line.forEachSegment((a, b) => {
                     const segment = new LineString([a, b]);
-                    const label = formatLength(segment);
+                    const label = this.formatLength(segment);
                     const segmentPoint = new Point(
                         segment.getCoordinateAt(0.5)
                     );
-                    styles.push(createSegmentStyle(segmentPoint,label));
+                    styles.push(createSegmentStyle(segmentPoint, label));
                 });
             }
             if (point && label) {
-                styles.push(createLabelStyle(point,label));
+                styles.push(createLabelStyle(point, label));
             }
             if (
                 tip &&
@@ -192,16 +188,45 @@ export default {
                 tipStyle.getText().setText(tip);
                 styles.push(tipStyle);
             }
-            if(startPoint){
-                styles.push(createLabelStyle(startPoint,"Start Point"));
+            if (startPoint) {
+                styles.push(createLabelStyle(startPoint, "Start Point"));
             }
             return styles;
         },
 
-        clearMeasure(){
-            this.source.clear();
+        //计算长度
+        formatLength(line) {
+            let newLine = line.clone();
+            let curPrj = this.oneMap.getView().getProjection();
+            newLine = newLine.transform(curPrj, "EPSG:3857");
+            const length = getLength(newLine);
+            let output;
+            if (length > 100) {
+                output = Math.round((length / 1000) * 100) / 100 + " km";
+            } else {
+                output = Math.round(length * 100) / 100 + " m";
+            }
+            return output;
         },
 
+        //计算面积
+        formatArea(polygon) {
+            let newPolygon = polygon.clone();
+            let curPrj = this.oneMap.getView().getProjection();
+            newPolygon = newPolygon.transform(curPrj, "EPSG:3857");
+            const area = getArea(newPolygon);
+            let output;
+            if (area > 10000) {
+                output = Math.round((area / 1000000) * 100) / 100 + " km\xB2";
+            } else {
+                output = Math.round(area * 100) / 100 + " m\xB2";
+            }
+            return output;
+        },
+
+        clearMeasure() {
+            this.source.clear();
+        },
     },
     //生命周期 - 创建完成（可以访问当前this实例）
     created() {},
@@ -221,7 +246,7 @@ export default {
     beforeDestroy() {
         this.oneMap.removeInteraction(this.modify);
         this.oneMap.removeInteraction(this.draw);
-        this.oneMap.removeLayer(this.vector);
+        // this.oneMap.removeLayer(this.vector);
     },
     //生命周期 - 销毁完成
     destroyed() {},

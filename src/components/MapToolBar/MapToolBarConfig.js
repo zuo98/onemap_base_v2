@@ -7,14 +7,20 @@ import {
     Style,
     Text,
 } from 'ol/style';
-import { getArea, getLength } from 'ol/sphere';
 
+
+//全幅视图
+export const fullExtentConfig={
+    center: [114.29626775048673, 30.578277587890625],
+    zoom: 10,
+    projection: "EPSG:4326",
+}
 
 //测量样式
 export const lineStyle = new Style({
     //测量面积的polygon的填充样式
     fill: new Fill({
-        color: 'rgba(255, 255, 255, 0.2)',
+        color: 'rgba(255, 255, 255, 0.4)',
     }),
     //polygon的边界线的样式，距离测量的线样式
     stroke: new Stroke({
@@ -152,28 +158,3 @@ export const createSegmentStyle = function(point, label){
         }),
     });
 }
-
-
-//计算长度
-export const formatLength = function (line) {
-    const length = getLength(line);
-    let output;
-    if (length > 100) {
-        output = Math.round((length / 1000) * 100) / 100 + ' km';
-    } else {
-        output = Math.round(length * 100) / 100 + ' m';
-    }
-    return output;
-};
-
-//计算面积
-export const formatArea = function (polygon) {
-    const area = getArea(polygon);
-    let output;
-    if (area > 10000) {
-        output = Math.round((area / 1000000) * 100) / 100 + ' km\xB2';
-    } else {
-        output = Math.round(area * 100) / 100 + ' m\xB2';
-    }
-    return output;
-};

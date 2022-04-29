@@ -2,6 +2,8 @@
 
 import { Map, Collection } from "ol";
 import { Group as LayerGroup } from "ol/layer";
+import { Vector as VectorSource } from "ol/source";
+import { Vector as VectorLayer } from "ol/layer";
 
 class OneMap extends Map {
     /**
@@ -52,7 +54,36 @@ class OneMap extends Map {
             this.busLayers = [];
         }
 
+        this.addMeasureLayer();
+
     }
+
+    addMeasureLayer() {
+        let source = new VectorSource();
+        let vector = new VectorLayer({
+            id: "measureLayer",
+            source: source,
+            zIndex: 10000,
+        });
+        this.addLayer(vector);
+    }
+
+    getMeasureLayer(){
+        return this.getLayerById("measureLayer");
+    }
+
+    getLayerById(layerId) {
+        let layer = this.getLayers().getArray().find((item) => { return item.get("id") && item.get("id") === layerId });
+        return layer ? layer : null;
+    }
+
+    removeLayerById(layerId){
+        let layer = this.getLayerById(layerId);
+        if(layer){
+            this.removeLayer(layer);
+        }
+    }
+
     getBaseLayers() {
         return this.baseLayers;
     }
@@ -69,16 +100,16 @@ class OneMap extends Map {
                 return item.layer
             });
             this.baseLayersGroup.setLayers(new Collection(this.baseLayers));
-            this.baseLayersInfo=baseLayersInfo;
+            this.baseLayersInfo = baseLayersInfo;
         }
     }
 
     setBaseLayerVisible(layerId) {
         if (this.baseLayers) {
-            console.log(' this.busLayersInfo: ',  this.baseLayersInfo);
+            console.log(' this.busLayersInfo: ', this.baseLayersInfo);
             this.baseLayersInfo.forEach((item) => {
                 item.layer.setVisible(false);
-                if (layerId===item.id) {
+                if (layerId === item.id) {
                     item.layer.setVisible(true);
                 }
             });
@@ -103,13 +134,13 @@ class OneMap extends Map {
             this.selectBusLayerIds = visibleIds;
             this.busLayers = layers;
             this.busLayersGroup.setLayers(new Collection(this.busLayers));
-            this.busLayersInfo=busLayersInfo;
+            this.busLayersInfo = busLayersInfo;
         }
     }
 
     setBusLayerVisible(layerIds) {
         if (this.busLayers) {
-            console.log(' this.busLayersInfo: ',  this.busLayersInfo);
+            console.log(' this.busLayersInfo: ', this.busLayersInfo);
             this.busLayersInfo.forEach((item) => {
                 item.layer.setVisible(false);
                 if (layerIds.includes(item.id)) {
