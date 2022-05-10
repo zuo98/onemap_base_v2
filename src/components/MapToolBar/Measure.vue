@@ -2,18 +2,9 @@
 <template>
     <div class="Measure">
         <div class="panel">
-            <el-select v-model="measureType" placeholder="请选择测量类型">
-                <el-option
-                    v-for="item in measureTypeOptions"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"
-                >
-                </el-option>
-            </el-select>
-            <el-checkbox v-model="showSegments">局部测量</el-checkbox>
-            <el-checkbox v-model="clearPrevious">连续测量</el-checkbox>
-            <el-button size="mini" @click="clearMeasure">清除</el-button>
+            <el-button @click="measureType = 'LineString'">测距</el-button>
+            <el-button @click="measureType = 'Polygon'">测面</el-button>
+            <el-button @click="clear">清除</el-button>
         </div>
     </div>
 </template>
@@ -47,17 +38,7 @@ export default {
     data() {
         //这里存放数据
         return {
-            measureTypeOptions: [
-                {
-                    value: "LineString",
-                    label: "距离测量",
-                },
-                {
-                    value: "Polygon",
-                    label: "面积测量",
-                },
-            ],
-            measureType: "LineString",
+            measureType: "",
             showSegments: true,
             clearPrevious: true,
 
@@ -97,7 +78,7 @@ export default {
                 return this.styleFunction(feature, this.showSegments);
             });
             this.oneMap.addInteraction(this.modify);
-            this.addInteraction();
+            // this.addInteraction();
         },
 
         addInteraction() {
@@ -132,7 +113,7 @@ export default {
                 this.oneMap.once("pointermove", function () {
                     modifyStyle.setGeometry();
                 });
-
+                this.oneMap.removeInteraction(this.draw);
                 tip = idleTip;
             });
             this.modify.setActive(true);
@@ -193,7 +174,9 @@ export default {
             }
             return styles;
         },
-
+        clear() {
+            this.source.clear();
+        },
         //计算长度
         formatLength(line) {
             let newLine = line.clone();
@@ -222,10 +205,6 @@ export default {
                 output = Math.round(area * 100) / 100 + " m\xB2";
             }
             return output;
-        },
-
-        clearMeasure() {
-            this.source.clear();
         },
     },
     //生命周期 - 创建完成（可以访问当前this实例）
@@ -257,7 +236,7 @@ export default {
 <style scoped>
 /* //@import url(); 引入公共css类 */
 .panel {
-    width: 150px;
+    width: 100px;
     height: 150px;
     border-radius: 5px;
     background-color: white;
@@ -265,5 +244,8 @@ export default {
     display: flex;
     flex-direction: column;
     justify-content: space-around;
+}
+.el-button {
+    width: 100px;
 }
 </style>

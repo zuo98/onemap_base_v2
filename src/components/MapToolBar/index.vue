@@ -2,13 +2,20 @@
 <template>
     <div class="map_tool_bar">
         <div class="tool_bar">
+            <el-button type="primary" @click="queryPoint">
+                <span>识别</span>
+            </el-button>
             <el-button type="primary" @click="fullExtent">
-                <i class="el-icon-map-location"></i>
                 <span>全幅</span>
             </el-button>
             <el-button type="primary" @click="openPanel('Measure')">
-                <i class="el-icon-aim"></i>
                 <span>测量</span>
+            </el-button>
+            <el-button type="primary" @click="clear">
+                <span>清除</span>
+            </el-button>
+            <el-button type="primary" @click="openPanel('Basemap')">
+                <span>底图</span>
             </el-button>
         </div>
         <div class="panel">
@@ -22,10 +29,8 @@
 <script>
 //这里可以导入其他文件（比如：组件，工具js，第三方插件js，json文件，图片文件等等）
 //例如：import 《组件名称》 from '《组件路径》';
-// import { fromLonLat } from "ol/proj";
-
 import Measure from "./Measure";
-import {fullExtentConfig} from "./MapToolBarConfig"
+import {fullExtentConfig} from "./MapToolBarConfig";
 export default {
     name: "MapToolBar",
     //import引入的组件需要注入到对象中才能使用
@@ -54,11 +59,21 @@ export default {
                 zoom: fullExtentConfig.zoom,
             })
         },
+        clear(){
+            let layers = this.oneMap.getToolOperateLayers();
+            layers.map((layer)=>{
+                let source = layer.getSource();
+                if(source){
+                    source.clear();
+                }
+            })
+        },
         openPanel(componentId) {
             this.componentId == componentId
                 ? (this.componentId = "")
                 : (this.componentId = componentId);
         },
+        queryPoint(){},
     },
     //生命周期 - 创建完成（可以访问当前this实例）
     created() {},

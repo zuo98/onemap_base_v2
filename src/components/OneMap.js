@@ -67,6 +67,16 @@ class OneMap extends Map {
         });
         this.addLayer(vector);
     }
+    getToolOperateLayers(){
+        let layers = [];
+        let measureLayer = this.getMeasureLayer();
+        if(measureLayer){
+            layers.push(measureLayer);
+        }
+
+        return layers;
+        
+    }
 
     getMeasureLayer(){
         return this.getLayerById("measureLayer");

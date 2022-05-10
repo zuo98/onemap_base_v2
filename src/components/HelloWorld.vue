@@ -2,7 +2,6 @@
     <div id="map">
         <div class="MapToolBar">
             <map-tool-bar :oneMap="oneMap"></map-tool-bar>
-            <el-button type="primary" @click="clear">清除</el-button>
             <el-button type="primary" @click="change">{{ statu }}</el-button>
             <el-button type="primary" @click="changeBaselayer"
                 >swicth</el-button
@@ -19,6 +18,7 @@ import { Tile as TileLayer } from "ol/layer";
 
 import MapToolBar from "./MapToolBar/index.vue";
 import {fullExtentConfig} from "./MapToolBar/MapToolBarConfig"
+import { defaults } from 'ol/interaction';
 export default {
     name: "HelloWorld",
     props: {
@@ -82,6 +82,9 @@ export default {
                 zoom: fullExtentConfig.zoom,
                 projection: fullExtentConfig.projection,
             }),
+            interactions: new defaults({
+                doubleClickZoom: false,
+            })
         });
 
         this.oneMap.on("click", (e) => {
