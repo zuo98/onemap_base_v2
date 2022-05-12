@@ -11,6 +11,9 @@
             <el-button type="primary" @click="openPanel('Measure')">
                 <span>测量</span>
             </el-button>
+            <el-button type="primary" @click="openPanel('Plot')">
+                <span>标绘</span>
+            </el-button>
             <el-button type="primary" @click="clear">
                 <span>清除</span>
             </el-button>
@@ -30,11 +33,12 @@
 //这里可以导入其他文件（比如：组件，工具js，第三方插件js，json文件，图片文件等等）
 //例如：import 《组件名称》 from '《组件路径》';
 import Measure from "./Measure";
+import Plot from './Plot.vue';        
 import {fullExtentConfig} from "./MapToolBarConfig";
 export default {
     name: "MapToolBar",
     //import引入的组件需要注入到对象中才能使用
-    components: {Measure},
+    components: {Measure, Plot},
     props: {
         oneMap:{
             type:Object,
@@ -54,12 +58,14 @@ export default {
     //方法集合
     methods: {
         fullExtent(){
+            this.closePanel();
             this.oneMap.getView().animate({
                 center: fullExtentConfig.center,
                 zoom: fullExtentConfig.zoom,
             })
         },
         clear(){
+            this.closePanel();
             let layers = this.oneMap.getToolOperateLayers();
             layers.map((layer)=>{
                 let source = layer.getSource();
@@ -68,12 +74,17 @@ export default {
                 }
             })
         },
+        closePanel(){
+            this.componentId = "";
+        },
         openPanel(componentId) {
             this.componentId == componentId
                 ? (this.componentId = "")
                 : (this.componentId = componentId);
         },
-        queryPoint(){},
+        queryPoint(){
+            this.componentId = "";
+        },
     },
     //生命周期 - 创建完成（可以访问当前this实例）
     created() {},

@@ -54,42 +54,73 @@ class OneMap extends Map {
             this.busLayers = [];
         }
 
-        this.addMeasureLayer();
+        this.addToolOperateLayers();
 
+    }
+
+    addToolOperateLayers() {
+        this.addMeasureLayer();
+        // this.addPlotLayer();
+    }
+
+    getToolOperateLayers() {
+        let layers = [];
+        let measureLayer = this.getMeasureLayer();
+        if (measureLayer) {
+            layers.push(measureLayer);
+        }
+        let plotLayer = this.getPlotLayer();
+        if (plotLayer) {
+            layers.push(plotLayer);
+        }
+        return layers;
+    }
+
+    getMeasureLayer() {
+        let measureLayer = this.getLayerByKeyValue("layerName", "measureLayer");
+        return measureLayer ? measureLayer : null;
     }
 
     addMeasureLayer() {
-        let source = new VectorSource();
-        let vector = new VectorLayer({
-            id: "measureLayer",
-            source: source,
-            zIndex: 10000,
-        });
-        this.addLayer(vector);
-    }
-    getToolOperateLayers(){
-        let layers = [];
-        let measureLayer = this.getMeasureLayer();
-        if(measureLayer){
-            layers.push(measureLayer);
+        if (!this.getMeasureLayer()) {
+            let source = new VectorSource();
+            let vector = new VectorLayer({
+                layerName: "measureLayer",
+                source: source,
+                zIndex: 10000,
+            });
+            this.addLayer(vector);
         }
-
-        return layers;
-        
     }
 
-    getMeasureLayer(){
-        return this.getLayerById("measureLayer");
+    getPlotLayer() {
+        let plotLayer = this.getLayerByKeyValue("layerName", "ol-plot-vector-layer");
+        return plotLayer ? plotLayer : null;
     }
 
-    getLayerById(layerId) {
-        let layer = this.getLayers().getArray().find((item) => { return item.get("id") && item.get("id") === layerId });
+    addPlotLayer() {
+        if (!this.getPlotLayer()) {
+            let source = new VectorSource();
+            let vector = new VectorLayer({
+                layerName: "plotLayer",
+                source: source,
+                zIndex: 10000,
+            });
+            this.addLayer(vector);
+        }
+    }
+
+
+    getLayerByKeyValue(key, value) {
+        let layer = this.getLayers().getArray().find((item) => { 
+            return item.get(key) && item.get(key) === value 
+        });
         return layer ? layer : null;
     }
 
-    removeLayerById(layerId){
-        let layer = this.getLayerById(layerId);
-        if(layer){
+    removeLayerByKeyValue(key, value) {
+        let layer = this.getLayerByKeyValue(key, value);
+        if (layer) {
             this.removeLayer(layer);
         }
     }

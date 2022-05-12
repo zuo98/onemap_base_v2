@@ -58,9 +58,15 @@ export default {
     },
     //监控data中的数据变化
     watch: {
-        measureType: function () {
-            this.oneMap.removeInteraction(this.draw);
-            this.addInteraction();
+        measureType: function (val, oldVal) {
+            console.log('newVal: ', val);
+            console.log('oldVal: ', oldVal);
+            if(val){
+                this.oneMap.removeInteraction(this.draw);
+                this.addInteraction();
+            }else{
+                this.oneMap.removeInteraction(this.draw);
+            }
         },
         showSegments: function () {
             this.vectorLayer.changed();
@@ -78,12 +84,11 @@ export default {
                 return this.styleFunction(feature, this.showSegments);
             });
             this.oneMap.addInteraction(this.modify);
-            // this.addInteraction();
         },
 
         addInteraction() {
             const drawType = this.measureType;
-            const activeTip =
+            const activeTip = 
                 "Click to continue drawing the " +
                 (drawType === "Polygon" ? "polygon" : "line");
             const idleTip = "Click to start measuring";
@@ -113,7 +118,7 @@ export default {
                 this.oneMap.once("pointermove", function () {
                     modifyStyle.setGeometry();
                 });
-                this.oneMap.removeInteraction(this.draw);
+                this.measureType='';
                 tip = idleTip;
             });
             this.modify.setActive(true);
