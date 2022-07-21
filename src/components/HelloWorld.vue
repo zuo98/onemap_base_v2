@@ -15,6 +15,7 @@ import OneMap from "./OneMap";
 import View from "ol/View";
 import { OSM, Stamen, TileArcGISRest } from "ol/source";
 import { Tile as TileLayer } from "ol/layer";
+// import {FullScreen, defaults as defaultControls} from 'ol/control';
 
 import MapToolBar from "./MapToolBar/index.vue";
 import {fullExtentConfig} from "./MapToolBar/MapToolBarConfig"
@@ -76,6 +77,7 @@ export default {
         });
 
         this.oneMap = new OneMap({
+            // controls: defaultControls().extend([new FullScreen()]),
             target: "map",
             view: new View({
                 center: fullExtentConfig.center,
@@ -85,6 +87,7 @@ export default {
             interactions: new defaults({
                 doubleClickZoom: false,
             })
+
         });
 
         this.oneMap.on("click", (e) => {
@@ -107,6 +110,7 @@ export default {
         ]);
         console.log("baseLayersGroup:", this.oneMap.baseLayersGroup);
         console.log("busLayersGroup", this.oneMap.busLayersGroup);
+        console.log("onemap",this.oneMap.getLayers());
     },
 };
 </script>

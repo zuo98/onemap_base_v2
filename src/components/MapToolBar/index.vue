@@ -17,7 +17,8 @@
             <el-button type="primary" @click="clear">
                 <span>清除</span>
             </el-button>
-            <el-button type="primary" @click="openPanel('Basemap')">
+            <base-layer :oneMap="oneMap"></base-layer>
+            <el-button type="primary" @click="openPanel('BaseLayers')">
                 <span>底图</span>
             </el-button>
         </div>
@@ -32,13 +33,15 @@
 <script>
 //这里可以导入其他文件（比如：组件，工具js，第三方插件js，json文件，图片文件等等）
 //例如：import 《组件名称》 from '《组件路径》';
-import Measure from "./Measure";
+import Measure from "./measure/Measure";
+import BaseLayers from "./baseLayer/index";
 import Plot from './Plot.vue';        
 import {fullExtentConfig} from "./MapToolBarConfig";
+import BaseLayer from "./baseLayer/index.vue";
 export default {
     name: "MapToolBar",
     //import引入的组件需要注入到对象中才能使用
-    components: {Measure, Plot},
+    components: { Measure, Plot, BaseLayers, BaseLayer },
     props: {
         oneMap:{
             type:Object,
